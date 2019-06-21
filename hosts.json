@@ -1,0 +1,19 @@
+[
+    {
+        "hosts": [
+        {
+            "host": "sandboxdnac.cisco.com",
+            "port": 80,
+            "username": "devnetuser",
+            "password": "Cisco123!",
+            "token": null
+        },{
+            "host": "sandboxdnac2.cisco.com",
+            "port": 80,
+            "username": "devnetuser",
+            "password": "Cisco123!",
+            "token": null
+        }
+    ]
+    }
+]
