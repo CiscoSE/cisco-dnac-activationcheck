@@ -15,6 +15,7 @@ class DNACSession():
             self.set_host()
 
         self.port = port
+
         if not token:
             if username:
                 self.username = username
@@ -133,7 +134,7 @@ class DNACSession():
             print("Timeout Error: ", err)
             sys.exit(1)
         except requests.exceptions.RequestException as err:
-            print("Oops: Something went wrong: ",err)
+            print("Oops: Something went wrong: ", err)
             sys.exit(1)
 
         token = result.json()["Token"]
@@ -210,39 +211,40 @@ class DNACSession():
         self.params['fabric'] = {}
 
         for item in fabric_domains_transits:
-            self.params['fabric'][item["id"]] = {}
-            self.params['fabric'][item["id"]]["vn_count"] = len(item["virtualNetwork"])
-            self.params['fabric'][item["id"]]["name"] = item["name"]
-            self.params['fabric'][item["id"]]["fabric_details"] = item
+            item_id = item["id"]
+            self.params['fabric'][item_id] = {}
+            self.params['fabric'][item_id]["vn_count"] = len(item["virtualNetwork"])
+            self.params['fabric'][item_id]["name"] = item["name"]
+            self.params['fabric'][item_id]["fabric_details"] = item
 
             """Gather fabric site ip pool"""
-            if "siteId" in self.params['fabric'][item["id"]]["fabric_details"]:
-                ip_pools = self.get_fabric_site_poolids(self.params['fabric'][item["id"]]["fabric_details"]["siteId"])
+            if "siteId" in self.params['fabric'][item_id]["fabric_details"]:
+                ip_pools = self.get_fabric_site_poolids(self.params['fabric'][item_id]["fabric_details"]["siteId"])
                 self.params['fabric'][item["id"]]["ippool"] = ip_pools
 
             """Gather fabric devices inventory"""
-            self.params['fabric'][item["id"]]["devices"] = []
-            self.params['fabric'][item["id"]]["edge"] = []
-            self.params['fabric'][item["id"]]["control"] = []
-            self.params['fabric'][item["id"]]["border"] = []
-            #self.params['fabric'][item["id"]]["device_details"] = []
+            self.params['fabric'][item_id]["devices"] = []
+            self.params['fabric'][item_id]["edge"] = []
+            self.params['fabric'][item_id]["control"] = []
+            self.params['fabric'][item_id]["border"] = []
+            #self.params['fabric'][item_id]["device_details"] = []
 
             if "siteId" in self.params['fabric'][item["id"]]["fabric_details"]:
-                fabric_by_site = self.get_fabric_inventory_by_site(self.params['fabric'][item["id"]]["fabric_details"]["siteId"])
+                fabric_by_site = self.get_fabric_inventory_by_site(self.params['fabric'][item_id]["fabric_details"]["siteId"])
                 for item_site in fabric_by_site:
                     if "roles" in item_site:
                         if "EDGENODE" in item_site["roles"]:
-                            self.params['fabric'][item["id"]]["edge"].append(item_site["networkDeviceId"])
-                            self.params['fabric'][item["id"]]["devices"].append(item_site["networkDeviceId"])
-                            #self.params['fabric'][item["id"]]["device_details"].append(item_site)
+                            self.params['fabric'][item_id]["edge"].append(item_site["networkDeviceId"])
+                            self.params['fabric'][item_id]["devices"].append(item_site["networkDeviceId"])
+                            #self.params['fabric'][item_id]["device_details"].append(item_site)
                         if "MAPSERVER" in item_site["roles"]:
-                            self.params['fabric'][item["id"]]["control"].append(item_site["networkDeviceId"])
-                            self.params['fabric'][item["id"]]["devices"].append(item_site["networkDeviceId"])
-                            #self.params['fabric'][item["id"]]["device_details"].append(item_site)
+                            self.params['fabric'][item_id]["control"].append(item_site["networkDeviceId"])
+                            self.params['fabric'][item_id]["devices"].append(item_site["networkDeviceId"])
+                            #self.params['fabric'][item_id]["device_details"].append(item_site)
                         if "BORDERNODE" in item_site["roles"]:
-                            self.params['fabric'][item["id"]]["border"].append(item_site["networkDeviceId"])
-                            self.params['fabric'][item["id"]]["devices"].append(item_site["networkDeviceId"])
-                            #self.params['fabric'][item["id"]]["device_details"].append(item_site)
+                            self.params['fabric'][item_id]["border"].append(item_site["networkDeviceId"])
+                            self.params['fabric'][item_id]["devices"].append(item_site["networkDeviceId"])
+                            #self.params['fabric'][item_id]["device_details"].append(item_site)
 
 
     def fabric_summary(self):
@@ -340,8 +342,20 @@ class DNACSession():
             print("Error checking task")
             sys.exit(1)
 
-        file = self.check_file(file_id)
-        return file
+
+        retries = 6
+        while retries > 0:
+            try:
+                file = self.check_file(file_id)
+                return file
+            except Exception:
+                print("-----File not ready. Trying again...")
+                time.sleep(2)
+                retries -= 1
+
+        if retries == 0:
+            print("Exception in Command Runner File Check")
+            sys.exit(1)
 
     def show_commands(self):
         for id, item in self.params["fabric"].items():

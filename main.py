@@ -22,13 +22,13 @@ def encrypt_json_file(action, source, destination):
         sys.exit(1)
 
     # encryption/decryption buffer size - 64K
-    bufferSize = 64 * 1024
-    password = "ilovesummer"
+    buffer_size = 64 * 1024
+    password = "il0v3summ3r"
 
     if action == 'encrypt':
-        pyAesCrypt.encryptFile(source, destination, password, bufferSize)
+        pyAesCrypt.encryptFile(source, destination, password, buffer_size)
     elif action == 'decrypt':
-        pyAesCrypt.decryptFile(source, destination, password, bufferSize)
+        pyAesCrypt.decryptFile(source, destination, password, buffer_size)
     '''
     try:
         os.remove(source)
@@ -40,23 +40,26 @@ def encrypt_json_file(action, source, destination):
 if __name__ == "__main__":
     print("---Welcome - Please enter the following information:")
 
-    connection = DNACSession()
+    try:
+        connection = DNACSession()
 
-    connection.count_hosts()
-    connection.count_network_devices_inventory()
-    connection.fabric_domains_transits()
-    connection.fabric_inventory()
-    #connection.fabric_summary()
-    connection.show_commands()
+        connection.count_hosts()
+        connection.count_network_devices_inventory()
+        connection.fabric_domains_transits()
+        connection.fabric_inventory()
+        #connection.fabric_summary()
+        connection.show_commands()
 
-    json_data = connection.get_params()
+        json_data = connection.get_params()
 
-    file_name_in = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
-    file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
-    write_json_file(file_name_in, json_data)
-    encrypt_json_file("encrypt", file_name_in, file_name_out)
-
-    print("---DONE - Data saved in file {0}".format(file_name_out))
+        file_name_in = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
+        file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
+        write_json_file(file_name_in, json_data)
+        encrypt_json_file("encrypt", file_name_in, file_name_out)
+        print("---DONE - Data saved in file {0}".format(file_name_out))
+    except SystemExit as e:
+        print('Press enter to exit...')
+        input()
 
     #encrypt_json_file("decrypt", "dna.txt", "dna.json")
     #dict = read_json_file("dna.json")
