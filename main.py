@@ -1,3 +1,30 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""activationchecker Console Script.
+
+Copyright (c) 2019 Cisco and/or its affiliates.
+
+This software is licensed to you under the terms of the Cisco Sample
+Code License, Version 1.1 (the "License"). You may obtain a copy of the
+License at
+
+               https://developer.cisco.com/docs/licenses
+
+All use of the material herein must be in accordance with the terms of
+the License. All rights not expressly granted by the License are
+reserved. Unless required by applicable law or agreed to separately in
+writing, software distributed under the License is distributed on an "AS
+IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied.
+
+"""
+
+__author__ = "Octavian Preda", "Wojciech Rog"
+__email__ = "opreda@cisco.com", "wrog@cisco.com"
+__version__ = "0.1.0"
+__copyright__ = "Copyright (c) 2019 Cisco and/or its affiliates."
+__license__ = "Cisco Sample Code License, Version 1.1"
+
 from dnacbackend import DNACSession
 import json
 import time
@@ -10,9 +37,11 @@ def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
         return json.loads(json_file.read())
 
+
 def write_json_file(file_url=None, json_data=None):
     with open(file_url, 'w') as json_file:
         json.dump(json_data, json_file)
+
 
 def encrypt_json_file(action, source, destination):
 
@@ -23,7 +52,7 @@ def encrypt_json_file(action, source, destination):
 
     # encryption/decryption buffer size - 64K
     buffer_size = 64 * 1024
-    password = "il0v3summ3r"
+    password = ""
 
     if action == 'encrypt':
         pyAesCrypt.encryptFile(source, destination, password, buffer_size)
@@ -37,6 +66,7 @@ def encrypt_json_file(action, source, destination):
         sys.exit(1)
     '''
 
+
 if __name__ == "__main__":
     print("---Welcome - Please enter the following information:")
 
@@ -47,7 +77,7 @@ if __name__ == "__main__":
         connection.count_network_devices_inventory()
         connection.fabric_domains_transits()
         connection.fabric_inventory()
-        #connection.fabric_summary()
+        # connection.fabric_summary()
         connection.show_commands()
 
         json_data = connection.get_params()
@@ -63,4 +93,4 @@ if __name__ == "__main__":
 
     #encrypt_json_file("decrypt", "dna.txt", "dna.json")
     #dict = read_json_file("dna.json")
-    #print(dict)
+    # print(dict)
