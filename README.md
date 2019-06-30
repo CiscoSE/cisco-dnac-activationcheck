@@ -17,11 +17,11 @@ With this process data is automatically gathered and filtered.
 - Activation Check data gathering for Wireless Assurance
 - Activation Check data gathering for SDA
 - Data export and encrypt
-- Executable created for each OS platform -> **DOWNLOAD** from the Release Tab
+- Executable created for each OS platform -> **DOWNLOAD** from the **Release Tab**
 
 
 ## Show Me!
-Uploading
+![Alt text](/../master/screenshot.png?raw=true "Mac OS Example")
 
 
 ## Technologies & Frameworks Used
@@ -56,7 +56,7 @@ NONE. There are 3 executables one for each supported OS platform:
 
 ## Usage
 
-For Windows OS:
+**For Windows OS:**
 - Download the actcheckwindows from the Release Tab
 - Open the executable by double clicking
 - Provide the hostname and credentials
@@ -68,7 +68,7 @@ For Windows OS:
   - One is a .txt file encrypted which is the file that will be emailed for valdiation
   - The other one is a .json file detailing the information gathered
 
-For Linux OS:
+**For Linux OS:**
 - Download the actchecklinux from the Release Tab
 - Run the executable: ```./actchecklinux```
   - if the app is not executed, verify if the execute option is set, chmod +x actchecklinux
@@ -81,7 +81,7 @@ For Linux OS:
   - One is a .txt file encrypted which is the file that will be emailed for valdiation
   - The other one is a .json file detailing the information gathered
 
-For Mac OS:
+**For Mac OS:**
 - Download the actcheckmac from the Release Tab
 - Run the executable: ```./actcheckmac```
   - if the app is not executed, verify if the execute option is set, chmod +x actcheckmac
@@ -95,7 +95,7 @@ For Mac OS:
   - The other one is a .json file detailing the information gathered
 
 
-Example run on Mac OS
+**Example run on Mac OS**
 ```./actcheckmac```
 
 ```---Welcome - Please enter the following information:
