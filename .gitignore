@@ -1,1 +1,4 @@
 venv/
+dna-*
+playground.py
+.gitignore
