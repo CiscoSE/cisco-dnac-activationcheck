@@ -90,19 +90,19 @@ class DNACSession():
         return self.host
 
     def set_host(self):
-        self.host = str(input("---Host address: "))
+        self.host = str(input("--Host address: "))
 
     def set_username(self):
-        self.username = str(input("---Username: "))
+        self.username = str(input("--Username: "))
 
     def set_password(self):
-        self.password = str(getpass.getpass("---Password: "))
+        self.password = str(getpass.getpass("--Password: "))
 
     def confirmation(self):
-        print("-----Creating DNAC profile for {}".format(self.host))
-        print("-----Running Activation Check on {0}".format(self.host))
+        print("---Creating DNAC profile for {}".format(self.host))
+        print("---Running Activation Check on {0}".format(self.host))
         self.confirm = str(input(
-            "---Please confirm Activation Check on {0}, type in yes or no: ".format(self.host)))
+            "--Please confirm Activation Check on {0}, type in yes or no: ".format(self.host)))
         self.confirm = self.confirm.strip().lower()
 
         if self.confirm == "yes" or self.confirm == "y":
@@ -110,7 +110,7 @@ class DNACSession():
         elif self.confirm == "no" or self.confirm == "n":
             return False
         else:
-            print("-----Not a valid option. Please try again.")
+            print("---Not a valid option. Please try again.")
             sys.exit(1)
 
     def set_show_passwords(self, flag=True):
@@ -189,14 +189,14 @@ class DNACSession():
 
     def get_hosts(self):
         """Retreive a list of system hosts (wired and wireless)"""
-        print("-----Retrieving system hosts")
+        print("---Retrieving system hosts")
         r = self._get_url(
             '/api/v1/topology/physical-topology?nodeType=HOST')
         return r.json().get('response')
 
     def count_hosts(self):
         """Counting wired and wireless host/clients"""
-        print("-----Counting system hosts")
+        print("---Counting system hosts")
         hosts = self.get_hosts().get('nodes')
         wired_hosts = [host for host in hosts if host['deviceType'] == 'wired']
         wireless_hosts = [
@@ -206,7 +206,7 @@ class DNACSession():
 
     def get_network_devices_inventory(self):
         """Retreive inventory of network devices"""
-        print("-----Retrieving network devices inventory list")
+        print("---Retrieving network devices inventory list")
         r = self._get_url(
             # '/dna/intent/api/v1/topology/physical-topology?nodeType=device')
             '/api/v1/network-device/')
@@ -214,27 +214,27 @@ class DNACSession():
 
     def count_network_devices_inventory(self):
         """Count devices in inventory of network devices"""
-        print("-----Counting network devices")
+        print("---Counting network devices")
         devices_inventory = self.get_network_devices_inventory()
         self.params['devices_inventory'] = len(devices_inventory)
 
     def get_fabric_domains_transits(self):
         """Retrieving inventory of fabric domains and transits"""
-        print("-----Retrieving fabric domains and transits inventory list")
+        print("---Retrieving fabric domains and transits inventory list")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/ConnectivityDomain')
         return r.json().get('response')
 
     def get_fabric_inventory_by_site(self, site_id):
         """Retrieving fabric devices inventory by site"""
-        print("-----Retrieving fabric devices inventory by site")
+        print("---Retrieving fabric devices inventory by site")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/DeviceInfo?siteDeviceList={0}'.format(site_id))
         return r.json().get('response')
 
     def get_fabric_site_poolids(self, siteid):
         """Retrieving fabric pool ids inventory by site"""
-        print("-----Retrieving fabric pool ids inventory by site")
+        print("---Retrieving fabric pool ids inventory by site")
         r = self._get_url(
             # '/api/v2/ippool/group?siteId={0}'.format(siteid))
             '/api/v2/ippool?contextvalue={0}'.format(siteid))
@@ -242,7 +242,7 @@ class DNACSession():
 
     def fabric_domains_transits(self):
         """Fabric domains, transits and vns"""
-        print("-----Analyzing fabric and extracting relevant numbers")
+        print("---Analyzing fabric and extracting relevant numbers")
         fabric_domains_transits = self.get_fabric_domains_transits()
         self.params['fabric_lans_count'] = sum(
             1 for item in fabric_domains_transits if item["domainType"] == "FABRIC_LAN")
@@ -320,14 +320,14 @@ class DNACSession():
 
     def get_fabric_inventory(self):
         """Retrieving fabric devices inventory"""
-        print("-----Retrieving fabric devices inventory list")
+        print("---Retrieving fabric devices inventory list")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/DeviceInfo')
         return r.json().get('response')
 
     def fabric_inventory(self):
         """Filtering fabric devices inventory"""
-        print("-----Filtering fabric devices inventory list")
+        print("---Filtering fabric devices inventory list")
         self.params["global_fabric_devices"] = []
         self.params["global_fabric_edge"] = []
         self.params["global_fabric_control"] = []
@@ -357,7 +357,7 @@ class DNACSession():
 
     def command_runner(self, device_uids, cmds):
         """Command Runner"""
-        print("-----Running Command Runner")
+        print("---Running Command Runner")
         payload = {"name": "command-runner",
                    "description": "command-runner-network-poller",
                    "deviceUuids": device_uids,
@@ -368,14 +368,14 @@ class DNACSession():
 
     def check_task(self, task_id):
         """Checking Command Runner Task ID"""
-        print("-----Checking Command Runner Task ID")
+        print("---Checking Command Runner Task ID")
         r = self._get_url(
             '/api/v1/task/{0}'.format(task_id))
         return r.json().get('response')
 
     def check_file(self, file_id):
         """Checking Command Runner File ID"""
-        print("-----Checking Command Runner File ID")
+        print("---Checking Command Runner File ID")
         r = self._get_url(
             '/api/v1/file/{0}'.format(file_id))
         return r.json()
@@ -392,7 +392,7 @@ class DNACSession():
                 file_id = task_progress["fileId"]
                 break
             except Exception:
-                print("-----Task still running. Trying again...")
+                print("---Task still running. Trying again...")
                 task = self.check_task(command['taskId'])
                 time.sleep(2)
                 retries -= 1
@@ -407,7 +407,7 @@ class DNACSession():
                 file = self.check_file(file_id)
                 return file
             except Exception:
-                print("-----File not ready. Trying again...")
+                print("---File not ready. Trying again...")
                 time.sleep(2)
                 retries -= 1
 

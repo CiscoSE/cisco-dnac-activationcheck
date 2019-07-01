@@ -32,6 +32,41 @@ import os
 import sys
 import pyAesCrypt
 
+WELCOME = """
+    DNA 'In-Use' Activation software, version 0.1.0
+Technical Support: opreda@cisco.com, wrog@cisco.com
+Copyright (c) 2019 Cisco and/or its affiliates.
+Compiled Thu 27-Jan-11 12:07 by wrog
+
+If you require assistance please contact us by sending email to
+opreda@cisco.com, wrog@cisco.com.
+"""
+
+def dialog_decision(message, option_yes=['y','yes'], option_no=['n', 'no'], default_true=True):
+    """created a input dialog to ask if a funciton will be executed"""
+    print(message)
+    while True:
+        print("Please use [{yes}] for 'yes' or [{no}] for 'no'".format(
+            yes = "/".join(option_yes),
+            no = "/".join(option_no),
+        ))
+        if default_true:
+            print("(deafult {})".format("/".join(option_yes)))
+        decision = input()
+        if decision.lower() in option_yes:
+            return True
+        elif decision.lower() in option_no:
+            return False
+        elif decision.lower() == '' and default_true:
+            return True
+        print("Decision unknown!")
+
+def dialog_decision(func):
+    def wrapper():
+        print("Something is happening before the function is called.")
+        func()
+        print("Something is happening after the function is called.")
+    return wrapper
 
 def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
@@ -68,17 +103,26 @@ def encrypt_json_file(action, source, destination):
 
 
 if __name__ == "__main__":
-    print("---Welcome - Please enter the following information:")
+    print(WELCOME)
+    print("-Welcome - Please enter the following information:")
 
     try:
+        
         connection = DNACSession()
+        print('-Starting case: ASSURANCE')
+        if dialog_decision('--Do you want to count wired and wireless hosts?'):
+            connection.count_hosts()
+        if dialog_decision('--Do you wnat to count devices in inventory?'):    
+            connection.count_network_devices_inventory()
 
-        connection.count_hosts()
-        connection.count_network_devices_inventory()
-        connection.fabric_domains_transits()
-        connection.fabric_inventory()
+        print('-Starting case: SDA FABRIC')
+        if dialog_decision('--Do you want to count SDA domains?'):
+            connection.fabric_domains_transits()
+        if dialog_decision('--Do you want to collect SDA fabric inventory'):
+            connection.fabric_inventory()
         # connection.fabric_summary()
-        connection.show_commands()
+        if dialog_decision('--Do you want to execute show commands?'):
+            connection.show_commands()
 
         json_data = connection.get_params()
 
