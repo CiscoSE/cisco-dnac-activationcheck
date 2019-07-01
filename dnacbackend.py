@@ -27,9 +27,11 @@ __license__ = "Cisco Sample Code License, Version 1.1"
 
 import json
 import sys
+import os
 import requests
 import time
 import getpass
+import hashlib
 
 requests.packages.urllib3.disable_warnings()
 
@@ -78,6 +80,8 @@ class DNACSession():
         else:
             self.token = token
 
+        self.set_identity()
+
         self.requests_headers = {
             'X-auth-token': self.token
         }
@@ -86,6 +90,8 @@ class DNACSession():
             'X-auth-token': self.token,
             'Content-Type': 'application/json'
         }
+
+        self.calculate_hash()
 
     def __repr__(self):
         return self.host
@@ -98,6 +104,17 @@ class DNACSession():
 
     def set_password(self):
         self.password = str(getpass.getpass("--DNA Center API password: "))
+
+    def set_identity(self):
+        print('Collection data for further identification')
+        print(self.params)
+        self.params['executer_name'] = str(input("--Your name: "))
+        self.params['executer_cco'] = str(input("--Your CCO ID: "))
+
+    def calculate_hash(self):
+        with open(os.path.realpath(__file__), 'rb') as file:
+            contents = file.read()
+            self.params['sha256'] = hashlib.sha256(contents).hexdigest()
 
     def ask_for_permision(message):
         """Decision decorator, askes for confirmation before running an API function"""
@@ -202,6 +219,10 @@ class DNACSession():
 
         token = result.json()["Token"]
         return token
+
+    def set_executer_in_params(self):
+        print('')
+        name = input()
 
     def get_params(self):
         """Retreive collected parameters"""

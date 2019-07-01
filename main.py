@@ -45,26 +45,6 @@ If you require assistance please contact us by sending email to
 opreda@cisco.com, wrog@cisco.com.
 """
 
-def dialog_decision(message, option_yes=['y','yes'], option_no=['n', 'no'], default_true=True):
-    """created a input dialog to ask if a funciton will be executed"""
-    print(message)
-    while True:
-        print("Please use [{yes}] for 'yes' or [{no}] for 'no'".format(
-            yes = "/".join(option_yes),
-            no = "/".join(option_no),
-        ))
-        if default_true:
-            print("[deafult 'yes'].")
-        decision = input()
-        if decision.lower() in option_yes:
-            return True
-        elif decision.lower() in option_no:
-            return False
-        elif decision.lower() == '' and default_true:
-            return True
-        print("Decision unknown!")
-
-
 def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
         return json.loads(json_file.read())
