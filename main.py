@@ -116,9 +116,10 @@ if __name__ == "__main__":
         json_data = connection.get_params()
 
         file_name_in = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
-        file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
         write_json_file(file_name_in, json_data)
-        encrypt_json_file("encrypt", file_name_in, file_name_out)
-        print("---DONE - Data saved in file {0}".format(file_name_out))
+        #removed due to transparency concerns
+        # file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
+        # encrypt_json_file("encrypt", file_name_in, file_name_out)
+        print("---DONE - Data saved in file {0}".format(file_name_in))
     except SystemExit as e:
         print('Press enter to exit...')
