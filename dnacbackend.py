@@ -84,19 +84,20 @@ class DNACSession():
             'show_passwords': False,
             'show_token': False,
             'string_mask': '*' * 5,
+            'ask_for_permission': True,
         }
 
     def __repr__(self):
         return self.host
 
     def set_host(self):
-        self.host = str(input("--Host address: "))
+        self.host = str(input("--DNA Center host address: "))
 
     def set_username(self):
-        self.username = str(input("--Username: "))
+        self.username = str(input("--DNA Center API username: "))
 
     def set_password(self):
-        self.password = str(getpass.getpass("--Password: "))
+        self.password = str(getpass.getpass("--DNA Center API password: "))
 
     def confirmation(self):
         print("---Creating DNAC profile for {}".format(self.host))
@@ -118,6 +119,33 @@ class DNACSession():
 
     def set_show_token(self, flag=True):
         self.config['show_token'] = flag
+
+    def set_ask_for_permission(self, flag=True):
+        self.config[ask_for_permission] = flag
+
+    def ask_for_permision(message):
+        """Decision decorator, askes for confirmation before running"""
+        def _decorator(function):
+            def wrapper( self ):
+                if self.config['ask_for_permission']:
+                    opt_yes = ['y','yes']
+                    opt_no = ['n', 'no']
+                    print(message)
+                    while True:
+                        print("Please use [{yes}] for 'yes' or [{no}] for 'no'".format(
+                            yes = "/".join(opt_yes),
+                            no = "/".join(opt_no),
+                        ))
+                        print("[deafult 'yes']")
+                        decision = input()
+                        if decision.lower() in opt_yes or decision == '':
+                            function(self)
+                            return True
+                        elif decision.lower() in opt_no:
+                            return False
+                        print("Decision unknown!")
+            return wrapper
+        return _decorator
 
     def _create_url(self, url):
         host = self.host + ':' + \
@@ -194,6 +222,7 @@ class DNACSession():
             '/api/v1/topology/physical-topology?nodeType=HOST')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to count wired and wireless hosts?')
     def count_hosts(self):
         """Counting wired and wireless host/clients"""
         print("---Counting system hosts")
@@ -204,6 +233,7 @@ class DNACSession():
         self.params['wired_hosts_count'] = len(wired_hosts)
         self.params['wireless_hosts_count'] = len(wireless_hosts)
 
+    
     def get_network_devices_inventory(self):
         """Retreive inventory of network devices"""
         print("---Retrieving network devices inventory list")
@@ -212,6 +242,7 @@ class DNACSession():
             '/api/v1/network-device/')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you wnat to count devices in inventory?')
     def count_network_devices_inventory(self):
         """Count devices in inventory of network devices"""
         print("---Counting network devices")
@@ -240,6 +271,7 @@ class DNACSession():
             '/api/v2/ippool?contextvalue={0}'.format(siteid))
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to count SDA domains?')
     def fabric_domains_transits(self):
         """Fabric domains, transits and vns"""
         print("---Analyzing fabric and extracting relevant numbers")
@@ -325,6 +357,7 @@ class DNACSession():
             '/api/v2/data/customer-facing-service/DeviceInfo')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to collect SDA fabric inventory')
     def fabric_inventory(self):
         """Filtering fabric devices inventory"""
         print("---Filtering fabric devices inventory list")
@@ -415,6 +448,7 @@ class DNACSession():
             print("Exception in Command Runner File Check")
             sys.exit(1)
 
+    @ask_for_permision('--Do you want to execute show commands?')
     def show_commands(self):
         for id, item in self.params["fabric"].items():
             self.params["fabric"][id]["show_commands"] = []

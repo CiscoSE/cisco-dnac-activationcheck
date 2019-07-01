@@ -51,7 +51,7 @@ def dialog_decision(message, option_yes=['y','yes'], option_no=['n', 'no'], defa
             no = "/".join(option_no),
         ))
         if default_true:
-            print("(deafult {})".format("/".join(option_yes)))
+            print("[deafult 'yes'].")
         decision = input()
         if decision.lower() in option_yes:
             return True
@@ -61,12 +61,6 @@ def dialog_decision(message, option_yes=['y','yes'], option_no=['n', 'no'], defa
             return True
         print("Decision unknown!")
 
-def dialog_decision(func):
-    def wrapper():
-        print("Something is happening before the function is called.")
-        func()
-        print("Something is happening after the function is called.")
-    return wrapper
 
 def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
@@ -110,19 +104,14 @@ if __name__ == "__main__":
         
         connection = DNACSession()
         print('-Starting case: ASSURANCE')
-        if dialog_decision('--Do you want to count wired and wireless hosts?'):
-            connection.count_hosts()
-        if dialog_decision('--Do you wnat to count devices in inventory?'):    
-            connection.count_network_devices_inventory()
+        connection.count_hosts()
+        connection.count_network_devices_inventory()
 
         print('-Starting case: SDA FABRIC')
-        if dialog_decision('--Do you want to count SDA domains?'):
-            connection.fabric_domains_transits()
-        if dialog_decision('--Do you want to collect SDA fabric inventory'):
-            connection.fabric_inventory()
+        connection.fabric_domains_transits()
+        connection.fabric_inventory()
         # connection.fabric_summary()
-        if dialog_decision('--Do you want to execute show commands?'):
-            connection.show_commands()
+        connection.show_commands()
 
         json_data = connection.get_params()
 
@@ -133,8 +122,3 @@ if __name__ == "__main__":
         print("---DONE - Data saved in file {0}".format(file_name_out))
     except SystemExit as e:
         print('Press enter to exit...')
-        input()
-
-    #encrypt_json_file("decrypt", "dna.txt", "dna.json")
-    #dict = read_json_file("dna.json")
-    # print(dict)
