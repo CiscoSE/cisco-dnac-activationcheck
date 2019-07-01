@@ -50,6 +50,16 @@ class DNACSession():
 
         self.port = port
 
+        self.params = {}
+
+        self.config = {
+            'request_verify': False,
+            'show_passwords': False,
+            'show_token': False,
+            'string_mask': '*' * 5,
+            'ask_for_permission': True,
+        }
+
         if not token:
             if username:
                 self.username = username
@@ -61,7 +71,7 @@ class DNACSession():
             else:
                 self.set_password()
 
-            if self.confirmation():
+            if self.login_ack():
                 self.token = self.get_auth_token()
             else:
                 sys.exit(1)
@@ -77,16 +87,6 @@ class DNACSession():
             'Content-Type': 'application/json'
         }
 
-        self.params = {}
-
-        self.config = {
-            'request_verify': False,
-            'show_passwords': False,
-            'show_token': False,
-            'string_mask': '*' * 5,
-            'ask_for_permission': True,
-        }
-
     def __repr__(self):
         return self.host
 
@@ -99,34 +99,11 @@ class DNACSession():
     def set_password(self):
         self.password = str(getpass.getpass("--DNA Center API password: "))
 
-    def confirmation(self):
-        print("---Creating DNAC profile for {}".format(self.host))
-        print("---Running Activation Check on {0}".format(self.host))
-        self.confirm = str(input(
-            "--Please confirm Activation Check on {0}, type in yes or no: ".format(self.host)))
-        self.confirm = self.confirm.strip().lower()
-
-        if self.confirm == "yes" or self.confirm == "y":
-            return True
-        elif self.confirm == "no" or self.confirm == "n":
-            return False
-        else:
-            print("---Not a valid option. Please try again.")
-            sys.exit(1)
-
-    def set_show_passwords(self, flag=True):
-        self.config['show_passwords'] = flag
-
-    def set_show_token(self, flag=True):
-        self.config['show_token'] = flag
-
-    def set_ask_for_permission(self, flag=True):
-        self.config[ask_for_permission] = flag
-
     def ask_for_permision(message):
-        """Decision decorator, askes for confirmation before running"""
+        """Decision decorator, askes for confirmation before running an API function"""
         def _decorator(function):
             def wrapper( self ):
+                print(self)
                 if self.config['ask_for_permission']:
                     opt_yes = ['y','yes']
                     opt_no = ['n', 'no']
@@ -146,6 +123,21 @@ class DNACSession():
                         print("Decision unknown!")
             return wrapper
         return _decorator
+
+    @ask_for_permision('--Login data complete, do you want to continue with activation check?')
+    def login_ack(self):
+        print("---Creating DNAC profile for {}".format(self.host))
+        print("---Running Activation Check on {0}".format(self.host))
+        return True
+
+    def set_show_passwords(self, flag=True):
+        self.config['show_passwords'] = flag
+
+    def set_show_token(self, flag=True):
+        self.config['show_token'] = flag
+
+    def set_ask_for_permission(self, flag=True):
+        self.config[ask_for_permission] = flag
 
     def _create_url(self, url):
         host = self.host + ':' + \

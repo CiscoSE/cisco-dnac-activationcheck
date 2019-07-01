@@ -38,6 +38,9 @@ Technical Support: opreda@cisco.com, wrog@cisco.com
 Copyright (c) 2019 Cisco and/or its affiliates.
 Compiled Thu 27-Jan-11 12:07 by wrog
 
+This scripts is purely read-only (HTTP GET)
+except DNA API Token Auth (HTTP POST)
+
 If you require assistance please contact us by sending email to
 opreda@cisco.com, wrog@cisco.com.
 """
