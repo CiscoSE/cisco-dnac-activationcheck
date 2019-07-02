@@ -165,7 +165,7 @@ if __name__ == "__main__":
             extracted_for_validation_json=file_name_validated,
             json_data=file_name,
         ))
-        print('/nPress any key to finish')
+        print('Press any key to finish')
         input()
 
     except SystemExit as e:
