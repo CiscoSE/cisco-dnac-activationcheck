@@ -106,8 +106,7 @@ class DNACSession():
         self.password = str(getpass.getpass("--DNA Center API password: "))
 
     def set_identity(self):
-        print('Collection data for further identification')
-        print(self.params)
+        print('Collecting data for further identification')
         self.params['executer_name'] = str(input("--Your name: "))
         self.params['executer_cco'] = str(input("--Your CCO ID: "))
 

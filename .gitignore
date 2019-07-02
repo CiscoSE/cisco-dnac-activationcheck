@@ -2,3 +2,4 @@ venv/
 dna-*
 .vscode/
 __pycache__/
+.DS_
