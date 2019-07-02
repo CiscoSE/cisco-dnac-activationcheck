@@ -33,7 +33,8 @@ import sys
 import pyAesCrypt
 
 WELCOME = """
-    DNA 'In-Use' Activation software, version 0.1.0
+
+DNA 'In-Use' Activation software, version 0.1.0
 Technical Support: opreda@cisco.com, wrog@cisco.com
 Copyright (c) 2019 Cisco and/or its affiliates.
 Compiled Thu 27-Jan-11 12:07 by wrog
@@ -44,6 +45,23 @@ except DNA API Token Auth (HTTP POST)
 If you require assistance please contact us by sending email to
 opreda@cisco.com, wrog@cisco.com.
 """
+
+END = """
+
+Script has finished sucessfully!
+Please submit `{extracted_for_validation_json}` file to
+
+    emearsupport-dnac-activation@cisco.com
+
+for validation.
+
+DISCLAIMER
+`{extracted_for_validation_json}` does not containg any sensitive data,
+only counters, fabric site name and executer name and cco id (for identification purposes).
+`{json_data}` shows all parameters that have been collected by the script.
+It is generated localy and can be deleted.
+"""
+
 
 def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
@@ -78,13 +96,44 @@ def encrypt_json_file(action, source, destination):
         sys.exit(1)
     '''
 
+def exctract_validation_data(contents):
+    result = {}
+    #getting direct parameter values
+    params = [
+        'executer_name',
+        'executer_cco',
+        'sha256',
+        'wired_hosts_count',
+        'wireless_hosts_count',
+        'fabric_sites_count',
+        ]
+
+    for param in params:
+        if param in contents.keys():
+            result[param] = contents[param]
+
+    #analyzing SDA fabrics
+    result['fabric'] = []
+    for fabric in contents['fabric'].items():
+        if fabric[1]['vn_count'] > 0 and fabric[1]['fabric_details']['domainType'] == 'FABRIC_SITE':
+            result['fabric'].append({
+                'name': fabric[1]['name'],
+                'vn_count': fabric[1]['vn_count'],
+                'ippool': len(fabric[1]['ippool']),
+                'devices': len(fabric[1]['devices']),
+                'edge': len(fabric[1]['edge']),
+                'control': len(fabric[1]['control']),
+                'border': len(fabric[1]['border']),
+            })
+                
+    return result
 
 if __name__ == "__main__":
     print(WELCOME)
     print("-Welcome - Please enter the following information:")
 
     try:
-        
+
         connection = DNACSession()
         print('-Starting case: ASSURANCE')
         connection.count_hosts()
@@ -97,12 +146,27 @@ if __name__ == "__main__":
         connection.show_commands()
 
         json_data = connection.get_params()
+        print('-Extracting data for validation [counters only]')
+        extracted_for_validation_json = exctract_validation_data(json_data)
 
-        file_name_in = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
-        write_json_file(file_name_in, json_data)
-        #removed due to transparency concerns
+        file_name = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
+        write_json_file(file_name, json_data)
+        print("---COLLECTION DONE - Data saved in file {0}".format(file_name))
+
+        file_name_validated = "dna-{0}-extracted.json".format(time.strftime("%Y%m%d-%H%M%S"))
+        write_json_file(file_name_validated, extracted_for_validation_json)
+        print("---EXTRACTION DONE - Data saved in file {0}".format(file_name_validated))
+
+        # removed due to transparency concerns
         # file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
         # encrypt_json_file("encrypt", file_name_in, file_name_out)
-        print("---DONE - Data saved in file {0}".format(file_name_in))
+
+        print(END.format(
+            extracted_for_validation_json=file_name_validated,
+            json_data=file_name,
+        ))
+        print('/nPress any key to finish')
+        input()
+
     except SystemExit as e:
         print('Press enter to exit...')

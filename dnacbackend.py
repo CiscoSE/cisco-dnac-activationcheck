@@ -119,16 +119,15 @@ class DNACSession():
     def ask_for_permision(message):
         """Decision decorator, askes for confirmation before running an API function"""
         def _decorator(function):
-            def wrapper( self ):
-                print(self)
+            def wrapper(self):
                 if self.config['ask_for_permission']:
-                    opt_yes = ['y','yes']
+                    opt_yes = ['y', 'yes']
                     opt_no = ['n', 'no']
                     print(message)
                     while True:
                         print("Please use [{yes}] for 'yes' or [{no}] for 'no'".format(
-                            yes = "/".join(opt_yes),
-                            no = "/".join(opt_no),
+                            yes="/".join(opt_yes),
+                            no="/".join(opt_no),
                         ))
                         print("[deafult 'yes']")
                         decision = input()
@@ -246,7 +245,6 @@ class DNACSession():
         self.params['wired_hosts_count'] = len(wired_hosts)
         self.params['wireless_hosts_count'] = len(wireless_hosts)
 
-    
     def get_network_devices_inventory(self):
         """Retreive inventory of network devices"""
         print("---Retrieving network devices inventory list")
