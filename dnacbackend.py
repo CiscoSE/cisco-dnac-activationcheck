@@ -27,9 +27,11 @@ __license__ = "Cisco Sample Code License, Version 1.1"
 
 import json
 import sys
+import os
 import requests
 import time
 import getpass
+import hashlib
 
 requests.packages.urllib3.disable_warnings()
 
@@ -50,6 +52,16 @@ class DNACSession():
 
         self.port = port
 
+        self.params = {}
+
+        self.config = {
+            'request_verify': False,
+            'show_passwords': False,
+            'show_token': False,
+            'string_mask': '*' * 5,
+            'ask_for_permission': True,
+        }
+
         if not token:
             if username:
                 self.username = username
@@ -61,12 +73,14 @@ class DNACSession():
             else:
                 self.set_password()
 
-            if self.confirmation():
+            if self.login_ack():
                 self.token = self.get_auth_token()
             else:
                 sys.exit(1)
         else:
             self.token = token
+
+        self.set_identity()
 
         self.requests_headers = {
             'X-auth-token': self.token
@@ -77,47 +91,71 @@ class DNACSession():
             'Content-Type': 'application/json'
         }
 
-        self.params = {}
-
-        self.config = {
-            'request_verify': False,
-            'show_passwords': False,
-            'show_token': False,
-            'string_mask': '*' * 5,
-        }
+        self.calculate_hash()
 
     def __repr__(self):
         return self.host
 
     def set_host(self):
-        self.host = str(input("---Host address: "))
+        self.host = str(input("--DNA Center host address: "))
 
     def set_username(self):
-        self.username = str(input("---Username: "))
+        self.username = str(input("--DNA Center API username: "))
 
     def set_password(self):
-        self.password = str(getpass.getpass("---Password: "))
+        self.password = str(getpass.getpass("--DNA Center API password: "))
 
-    def confirmation(self):
-        print("-----Creating DNAC profile for {}".format(self.host))
-        print("-----Running Activation Check on {0}".format(self.host))
-        self.confirm = str(input(
-            "---Please confirm Activation Check on {0}, type in yes or no: ".format(self.host)))
-        self.confirm = self.confirm.strip().lower()
+    def set_identity(self):
+        print('Collecting data for further identification')
+        self.params['executer_name'] = str(input("--Your name: "))
+        self.params['executer_cco'] = str(input("--Your CCO ID: "))
 
-        if self.confirm == "yes" or self.confirm == "y":
-            return True
-        elif self.confirm == "no" or self.confirm == "n":
-            return False
-        else:
-            print("-----Not a valid option. Please try again.")
-            sys.exit(1)
+    def calculate_hash(self):
+        try:
+            with open('dnacbackend.py', 'rb') as file:
+                contents = file.read()
+                self.params['sha256'] = hashlib.sha256(contents).hexdigest()
+        except FileNotFoundError:
+            self.params['sha256'] = 'ERROR: could not calculate hash - file not found'
+
+    def ask_for_permision(message):
+        """Decision decorator, askes for confirmation before running an API function"""
+        def _decorator(function):
+            def wrapper(self):
+                if self.config['ask_for_permission']:
+                    opt_yes = ['y', 'yes']
+                    opt_no = ['n', 'no']
+                    print(message)
+                    while True:
+                        print("Please use [{yes}] for 'yes' or [{no}] for 'no'".format(
+                            yes="/".join(opt_yes),
+                            no="/".join(opt_no),
+                        ))
+                        print("[deafult 'yes']")
+                        decision = input()
+                        if decision.lower() in opt_yes or decision == '':
+                            function(self)
+                            return True
+                        elif decision.lower() in opt_no:
+                            return False
+                        print("Decision unknown!")
+            return wrapper
+        return _decorator
+
+    @ask_for_permision('--Login data complete, do you want to continue with activation check?')
+    def login_ack(self):
+        print("---Creating DNAC profile for {}".format(self.host))
+        print("---Running Activation Check on {0}".format(self.host))
+        return True
 
     def set_show_passwords(self, flag=True):
         self.config['show_passwords'] = flag
 
     def set_show_token(self, flag=True):
         self.config['show_token'] = flag
+
+    def set_ask_for_permission(self, flag=True):
+        self.config[ask_for_permission] = flag
 
     def _create_url(self, url):
         host = self.host + ':' + \
@@ -183,20 +221,25 @@ class DNACSession():
         token = result.json()["Token"]
         return token
 
+    def set_executer_in_params(self):
+        print('')
+        name = input()
+
     def get_params(self):
         """Retreive collected parameters"""
         return self.params
 
     def get_hosts(self):
         """Retreive a list of system hosts (wired and wireless)"""
-        print("-----Retrieving system hosts")
+        print("---Retrieving system hosts")
         r = self._get_url(
             '/api/v1/topology/physical-topology?nodeType=HOST')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to count wired and wireless hosts?')
     def count_hosts(self):
         """Counting wired and wireless host/clients"""
-        print("-----Counting system hosts")
+        print("---Counting system hosts")
         hosts = self.get_hosts().get('nodes')
         wired_hosts = [host for host in hosts if host['deviceType'] == 'wired']
         wireless_hosts = [
@@ -206,43 +249,51 @@ class DNACSession():
 
     def get_network_devices_inventory(self):
         """Retreive inventory of network devices"""
-        print("-----Retrieving network devices inventory list")
+        print("---Retrieving network devices inventory list")
         r = self._get_url(
             # '/dna/intent/api/v1/topology/physical-topology?nodeType=device')
             '/api/v1/network-device/')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you wnat to count devices in inventory?')
     def count_network_devices_inventory(self):
         """Count devices in inventory of network devices"""
-        print("-----Counting network devices")
+        print("---Counting network devices")
         devices_inventory = self.get_network_devices_inventory()
-        self.params['devices_inventory'] = len(devices_inventory)
+        wlc_count = sum([item['family']=='Wireless Controller' for item in devices_inventory])
+        ap_count = sum([item['family']=='Unified AP' for item in devices_inventory])
+        self.params['devices_inventory'] = {
+            'inventory_total': len(devices_inventory),
+            'wlc_count': wlc_count,
+            'ap_count': ap_count,
+        }
 
     def get_fabric_domains_transits(self):
         """Retrieving inventory of fabric domains and transits"""
-        print("-----Retrieving fabric domains and transits inventory list")
+        print("---Retrieving fabric domains and transits inventory list")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/ConnectivityDomain')
         return r.json().get('response')
 
     def get_fabric_inventory_by_site(self, site_id):
         """Retrieving fabric devices inventory by site"""
-        print("-----Retrieving fabric devices inventory by site")
+        print("---Retrieving fabric devices inventory by site")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/DeviceInfo?siteDeviceList={0}'.format(site_id))
         return r.json().get('response')
 
     def get_fabric_site_poolids(self, siteid):
         """Retrieving fabric pool ids inventory by site"""
-        print("-----Retrieving fabric pool ids inventory by site")
+        print("---Retrieving fabric pool ids inventory by site")
         r = self._get_url(
             # '/api/v2/ippool/group?siteId={0}'.format(siteid))
             '/api/v2/ippool?contextvalue={0}'.format(siteid))
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to count SDA domains?')
     def fabric_domains_transits(self):
         """Fabric domains, transits and vns"""
-        print("-----Analyzing fabric and extracting relevant numbers")
+        print("---Analyzing fabric and extracting relevant numbers")
         fabric_domains_transits = self.get_fabric_domains_transits()
         self.params['fabric_lans_count'] = sum(
             1 for item in fabric_domains_transits if item["domainType"] == "FABRIC_LAN")
@@ -320,14 +371,15 @@ class DNACSession():
 
     def get_fabric_inventory(self):
         """Retrieving fabric devices inventory"""
-        print("-----Retrieving fabric devices inventory list")
+        print("---Retrieving fabric devices inventory list")
         r = self._get_url(
             '/api/v2/data/customer-facing-service/DeviceInfo')
         return r.json().get('response')
 
+    @ask_for_permision('--Do you want to collect SDA fabric inventory')
     def fabric_inventory(self):
         """Filtering fabric devices inventory"""
-        print("-----Filtering fabric devices inventory list")
+        print("---Filtering fabric devices inventory list")
         self.params["global_fabric_devices"] = []
         self.params["global_fabric_edge"] = []
         self.params["global_fabric_control"] = []
@@ -357,7 +409,7 @@ class DNACSession():
 
     def command_runner(self, device_uids, cmds):
         """Command Runner"""
-        print("-----Running Command Runner")
+        print("---Running Command Runner")
         payload = {"name": "command-runner",
                    "description": "command-runner-network-poller",
                    "deviceUuids": device_uids,
@@ -368,14 +420,14 @@ class DNACSession():
 
     def check_task(self, task_id):
         """Checking Command Runner Task ID"""
-        print("-----Checking Command Runner Task ID")
+        print("---Checking Command Runner Task ID")
         r = self._get_url(
             '/api/v1/task/{0}'.format(task_id))
         return r.json().get('response')
 
     def check_file(self, file_id):
         """Checking Command Runner File ID"""
-        print("-----Checking Command Runner File ID")
+        print("---Checking Command Runner File ID")
         r = self._get_url(
             '/api/v1/file/{0}'.format(file_id))
         return r.json()
@@ -392,7 +444,7 @@ class DNACSession():
                 file_id = task_progress["fileId"]
                 break
             except Exception:
-                print("-----Task still running. Trying again...")
+                print("---Task still running. Trying again...")
                 task = self.check_task(command['taskId'])
                 time.sleep(2)
                 retries -= 1
@@ -407,7 +459,7 @@ class DNACSession():
                 file = self.check_file(file_id)
                 return file
             except Exception:
-                print("-----File not ready. Trying again...")
+                print("---File not ready. Trying again...")
                 time.sleep(2)
                 retries -= 1
 
@@ -415,6 +467,7 @@ class DNACSession():
             print("Exception in Command Runner File Check")
             sys.exit(1)
 
+    @ask_for_permision('--Do you want to execute show commands?')
     def show_commands(self):
         for id, item in self.params["fabric"].items():
             self.params["fabric"][id]["show_commands"] = []
