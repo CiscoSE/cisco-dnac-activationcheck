@@ -3,3 +3,5 @@ dna-*
 .vscode/
 __pycache__/
 .DS_
+build/
+*.spec
