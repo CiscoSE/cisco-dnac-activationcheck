@@ -103,6 +103,7 @@ def exctract_validation_data(contents):
         'executer_name',
         'executer_cco',
         'sha256',
+        'devices_inventory',
         'wired_hosts_count',
         'wireless_hosts_count',
         'fabric_sites_count',

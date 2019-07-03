@@ -260,7 +260,13 @@ class DNACSession():
         """Count devices in inventory of network devices"""
         print("---Counting network devices")
         devices_inventory = self.get_network_devices_inventory()
-        self.params['devices_inventory'] = len(devices_inventory)
+        wlc_count = sum([item['family']=='Wireless Controller' for item in devices_inventory])
+        ap_count = sum([item['family']=='Unified AP' for item in devices_inventory])
+        self.params['devices_inventory'] = {
+            'inventory_total': len(devices_inventory),
+            'wlc_count': wlc_count,
+            'ap_count': ap_count,
+        }
 
     def get_fabric_domains_transits(self):
         """Retrieving inventory of fabric domains and transits"""
