@@ -111,9 +111,12 @@ class DNACSession():
         self.params['executer_cco'] = str(input("--Your CCO ID: "))
 
     def calculate_hash(self):
-        with open(os.path.realpath(__file__), 'rb') as file:
-            contents = file.read()
-            self.params['sha256'] = hashlib.sha256(contents).hexdigest()
+        try:
+            with open('dnacbackend.py', 'rb') as file:
+                contents = file.read()
+                self.params['sha256'] = hashlib.sha256(contents).hexdigest()
+        except FileNotFoundError:
+            self.params['sha256'] = 'ERROR: could not calculate hash - file not found'
 
     def ask_for_permision(message):
         """Decision decorator, askes for confirmation before running an API function"""
