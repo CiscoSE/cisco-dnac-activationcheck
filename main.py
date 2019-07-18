@@ -26,29 +26,29 @@ __copyright__ = "Copyright (c) 2019 Cisco and/or its affiliates."
 __license__ = "Cisco Sample Code License, Version 1.1"
 
 from dnacbackend import DNACSession
+from colorama import init, deinit, Fore, Back, Style
 import json
 import time
 import os
 import sys
-import pyAesCrypt
 
 WELCOME = """
 
-DNA 'In-Use' Activation software, version 0.1.0
+{tf}DNA 'In-Use' Activation software, version 0.1.0
 Technical Support: opreda@cisco.com, wrog@cisco.com
 Copyright (c) 2019 Cisco and/or its affiliates.
-Compiled Thu 27-Jan-11 12:07 by wrog
+Compiled Thu 18-Jul-19 12:07 by wrog
 
 This scripts is purely read-only (HTTP GET)
 except DNA API Token Auth (HTTP POST)
 
 If you require assistance please contact us by sending email to
-opreda@cisco.com, wrog@cisco.com.
+opreda@cisco.com, wrog@cisco.com.{tfend}
 """
 
 END = """
 
-Script has finished sucessfully!
+{tf}Script has finished sucessfully!
 Please submit `{extracted_for_validation_json}` file to
 
     emearsupport-dnac-activation@cisco.com
@@ -59,7 +59,7 @@ DISCLAIMER
 `{extracted_for_validation_json}` does not containg any sensitive data,
 only counters, fabric site name and executer name and cco id (for identification purposes).
 `{json_data}` shows all parameters that have been collected by the script.
-It is generated localy and can be deleted.
+It is generated localy and can be deleted.{tfend}
 """
 
 
@@ -67,34 +67,9 @@ def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
         return json.loads(json_file.read())
 
-
 def write_json_file(file_url=None, json_data=None):
     with open(file_url, 'w') as json_file:
         json.dump(json_data, json_file)
-
-
-def encrypt_json_file(action, source, destination):
-
-    # If the input file does not exist, then the program terminates early.
-    if not os.path.exists(source):
-        print('The file %s does not exist. Quitting...' % (source))
-        sys.exit(1)
-
-    # encryption/decryption buffer size - 64K
-    buffer_size = 64 * 1024
-    password = ""
-
-    if action == 'encrypt':
-        pyAesCrypt.encryptFile(source, destination, password, buffer_size)
-    elif action == 'decrypt':
-        pyAesCrypt.decryptFile(source, destination, password, buffer_size)
-    '''
-    try:
-        os.remove(source)
-    except:
-        print("---Failed deleting file")
-        sys.exit(1)
-    '''
 
 def exctract_validation_data(contents):
     result = {}
@@ -130,44 +105,44 @@ def exctract_validation_data(contents):
     return result
 
 if __name__ == "__main__":
-    print(WELCOME)
+    init()
+    print(WELCOME.format(tf=Fore.MAGENTA, tfend=Style.RESET_ALL))
     print("-Welcome - Please enter the following information:")
 
     try:
 
         connection = DNACSession()
-        print('-Starting case: ASSURANCE')
+        print(Fore.CYAN+'-Starting case: ASSURANCE'+Style.RESET_ALL)
         connection.count_hosts()
         connection.count_network_devices_inventory()
 
-        print('-Starting case: SDA FABRIC')
+        print(Fore.CYAN+'-Starting case: SDA FABRIC'+Style.RESET_ALL)
         connection.fabric_domains_transits()
         connection.fabric_inventory()
         # connection.fabric_summary()
         connection.show_commands()
 
         json_data = connection.get_params()
-        print('-Extracting data for validation [counters only]')
+        print(Fore.GREEN+'-Extracting data for validation [counters only]'+Style.RESET_ALL)
         extracted_for_validation_json = exctract_validation_data(json_data)
 
         file_name = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
         write_json_file(file_name, json_data)
-        print("---COLLECTION DONE - Data saved in file {0}".format(file_name))
+        print(Fore.CYAN+"---COLLECTION DONE - Data saved in file {0}".format(file_name)+Fore.RESET)
 
         file_name_validated = "dna-{0}-extracted.json".format(time.strftime("%Y%m%d-%H%M%S"))
         write_json_file(file_name_validated, extracted_for_validation_json)
-        print("---EXTRACTION DONE - Data saved in file {0}".format(file_name_validated))
-
-        # removed due to transparency concerns
-        # file_name_out = "dna-{0}.txt".format(time.strftime("%Y%m%d-%H%M%S"))
-        # encrypt_json_file("encrypt", file_name_in, file_name_out)
+        print(Fore.CYAN+"---EXTRACTION DONE - Data saved in file {0}".format(file_name_validated)+Fore.RESET)
 
         print(END.format(
             extracted_for_validation_json=file_name_validated,
             json_data=file_name,
+            tf=Fore.MAGENTA,
+            tfend=Style.RESET_ALL
         ))
         print('Press any key to finish')
+        deinit()
         input()
-
     except SystemExit as e:
         print('Press enter to exit...')
+        deinit()

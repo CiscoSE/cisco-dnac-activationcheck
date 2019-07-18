@@ -5,3 +5,4 @@ __pycache__/
 .DS_
 build/
 *.spec
+test.py
