@@ -92,17 +92,18 @@ def exctract_validation_data(contents):
 
     #analyzing SDA fabrics
     result['fabric'] = []
-    for fabric in contents['fabric'].items():
-        if fabric[1]['vn_count'] > 0 and fabric[1]['fabric_details']['domainType'] == 'FABRIC_SITE':
-            result['fabric'].append({
-                'name': fabric[1]['name'],
-                'vn_count': fabric[1]['vn_count'],
-                'ippool': len(fabric[1]['ippool']),
-                'devices': len(fabric[1]['devices']),
-                'edge': len(fabric[1]['edge']),
-                'control': len(fabric[1]['control']),
-                'border': len(fabric[1]['border']),
-            })
+    if 'fabric' in contents.keys():
+        for fabric in contents['fabric'].items():
+            if fabric[1]['vn_count'] > 0 and fabric[1]['fabric_details']['domainType'] == 'FABRIC_SITE':
+                result['fabric'].append({
+                    'name': fabric[1]['name'],
+                    'vn_count': fabric[1]['vn_count'],
+                    'ippool': len(fabric[1]['ippool']),
+                    'devices': len(fabric[1]['devices']),
+                    'edge': len(fabric[1]['edge']),
+                    'control': len(fabric[1]['control']),
+                    'border': len(fabric[1]['border']),
+                })
                 
     return result
 
