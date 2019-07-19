@@ -4,5 +4,6 @@ dna-*
 __pycache__/
 .DS_
 build/
+dist/
 *.spec
 test.py
