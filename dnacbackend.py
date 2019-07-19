@@ -94,6 +94,7 @@ class DNACSession():
 
         self.calculate_hash()
 
+
     def __repr__(self):
         return self.host
 

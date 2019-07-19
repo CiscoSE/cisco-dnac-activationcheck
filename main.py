@@ -67,8 +67,10 @@ def read_json_file(file_url=None):
     with open(file_url, 'r') as json_file:
         return json.loads(json_file.read())
 
-def write_json_file(file_url=None, json_data=None):
-    with open(file_url, 'w') as json_file:
+def write_json_file(file_name=None, json_data=None):
+    dir_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    file_path = os.path.join(dir_path, file_name)
+    with open(file_path, 'w') as json_file:
         json.dump(json_data, json_file)
 
 def exctract_validation_data(contents):
@@ -112,18 +114,18 @@ if __name__ == "__main__":
     try:
 
         connection = DNACSession()
-        print(Fore.CYAN+'-Starting case: ASSURANCE'+Style.RESET_ALL)
+        print(Fore.CYAN+'-Starting case: ASSURANCE'+Fore.RESET)
         connection.count_hosts()
         connection.count_network_devices_inventory()
 
-        print(Fore.CYAN+'-Starting case: SDA FABRIC'+Style.RESET_ALL)
+        print(Fore.CYAN+'-Starting case: SDA FABRIC'+Fore.RESET)
         connection.fabric_domains_transits()
         connection.fabric_inventory()
         # connection.fabric_summary()
         connection.show_commands()
 
         json_data = connection.get_params()
-        print(Fore.GREEN+'-Extracting data for validation [counters only]'+Style.RESET_ALL)
+        print(Fore.CYAN+'-Extracting data for validation [counters only]'+Fore.RESET)
         extracted_for_validation_json = exctract_validation_data(json_data)
 
         file_name = "dna-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
