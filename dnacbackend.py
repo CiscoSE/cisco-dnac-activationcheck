@@ -93,7 +93,7 @@ class DNACSession():
         }
 
         self.calculate_hash()
-
+        self.get_epoch_time()
 
     def __repr__(self):
         return self.host
@@ -119,6 +119,9 @@ class DNACSession():
                 self.params['sha256'] = hashlib.sha256(contents).hexdigest()
         except FileNotFoundError:
             self.params['sha256'] = 'ERROR: could not calculate hash - file not found'
+
+    def get_epoch_time(self):
+        self.epoch_time = int(time.time())*1000
 
     def ask_for_permision(message):
         """Decision decorator, askes for confirmation before running an API function"""
@@ -149,7 +152,8 @@ class DNACSession():
     @ask_for_permision('--Login data complete, do you want to continue with activation check?')
     def login_ack(self):
         print(Fore.GREEN+"---Creating DNAC profile for {}".format(self.host))
-        print("---Running Activation Check on {0}".format(self.host)+Fore.RESET)
+        print(
+            "---Running Activation Check on {0}".format(self.host)+Fore.RESET)
         return True
 
     def set_show_passwords(self, flag=True):
@@ -264,8 +268,10 @@ class DNACSession():
         """Count devices in inventory of network devices"""
         print(Fore.GREEN+"---Counting network devices"+Fore.RESET)
         devices_inventory = self.get_network_devices_inventory()
-        wlc_count = sum([item['family']=='Wireless Controller' for item in devices_inventory])
-        ap_count = sum([item['family']=='Unified AP' for item in devices_inventory])
+        wlc_count = sum(
+            [item['family'] == 'Wireless Controller' for item in devices_inventory])
+        ap_count = sum(
+            [item['family'] == 'Unified AP' for item in devices_inventory])
         self.params['devices_inventory'] = {
             'inventory_total': len(devices_inventory),
             'wlc_count': wlc_count,
@@ -274,7 +280,8 @@ class DNACSession():
 
     def get_fabric_domains_transits(self):
         """Retrieving inventory of fabric domains and transits"""
-        print(Fore.GREEN+"---Retrieving fabric domains and transits inventory list"+Fore.RESET)
+        print(
+            Fore.GREEN+"---Retrieving fabric domains and transits inventory list"+Fore.RESET)
         r = self._get_url(
             '/api/v2/data/customer-facing-service/ConnectivityDomain')
         return r.json().get('response')
@@ -484,3 +491,31 @@ class DNACSession():
                 cmds = ["show lisp site summary", "show lisp session"]
                 file = self.run_command(item["control"], cmds)
                 self.params["fabric"][id]["show_commands"].append(file)
+
+    def _get_hosts_via_sitehealth(self):
+        payload = {
+            "typeList": {
+                "type": "SITE",
+                "startTime": self.epoch_time - 300000,  # 5 mins
+                "endTime": self.epoch_time,
+                "timeAPITime": self.epoch_time
+            },
+            "option": "CLIENT",
+            "selectedTypeIdList": [
+                "__global__"
+            ]
+        }
+        r = self._post_url(
+            '/api/assurance/v1/host/dash/healthdetail', payload=payload)
+        return r.json().get('response')
+
+    @ask_for_permision('--Do you want to count wired and wireless hosts?')
+    def count_hosts_via_sitehealt(self):
+        print(Fore.GREEN+"---Counting system hosts"+Fore.RESET)
+        sites = self._get_hosts_via_sitehealth()
+        for site in sites:
+            for item in site['scoreDetail']:
+                if item['scoreCategory']['value'] == 'WIRELESS':
+                    self.params['wireless_hosts_count_via_healthcheck'] = item['clientUniqueCount']
+                if item['scoreCategory']['value'] == 'WIRED':
+                    self.params['wired_hosts_count_via_healthcheck'] = item['clientUniqueCount']

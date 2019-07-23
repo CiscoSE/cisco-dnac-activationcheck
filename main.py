@@ -117,6 +117,7 @@ if __name__ == "__main__":
         connection = DNACSession()
         print(Fore.CYAN+'-Starting case: ASSURANCE'+Fore.RESET)
         connection.count_hosts()
+        connection.count_hosts_via_sitehealt()
         connection.count_network_devices_inventory()
 
         print(Fore.CYAN+'-Starting case: SDA FABRIC'+Fore.RESET)
