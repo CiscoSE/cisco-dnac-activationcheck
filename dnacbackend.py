@@ -254,6 +254,8 @@ class DNACSession():
             host for host in hosts if host['deviceType'] == 'wireless']
         self.params['wired_hosts_count'] = len(wired_hosts)
         self.params['wireless_hosts_count'] = len(wireless_hosts)
+        
+        self._count_hosts_via_sitehealt()
 
     def get_network_devices_inventory(self):
         """Retreive inventory of network devices"""
@@ -509,9 +511,8 @@ class DNACSession():
             '/api/assurance/v1/host/dash/healthdetail', payload=payload)
         return r.json().get('response')
 
-    @ask_for_permision('--Do you want to count wired and wireless hosts?')
-    def count_hosts_via_sitehealt(self):
-        print(Fore.GREEN+"---Counting system hosts"+Fore.RESET)
+    def _count_hosts_via_sitehealt(self):
+        print(Fore.GREEN+"---Counting system hosts via healtcheck"+Fore.RESET)
         sites = self._get_hosts_via_sitehealth()
         for site in sites:
             for item in site['scoreDetail']:
