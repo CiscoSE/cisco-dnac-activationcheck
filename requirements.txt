@@ -1,10 +1,13 @@
 asn1crypto==0.24.0
+autopep8==1.4.4
 certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
+colorama==0.4.1
 cryptography==2.7
 idna==2.8
 pyAesCrypt==0.4.3
+pycodestyle==2.5.0
 pycparser==2.19
 requests==2.22.0
 six==1.12.0
