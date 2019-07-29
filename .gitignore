@@ -1,0 +1,10 @@
+venv/
+dna-*
+.vscode/
+__pycache__/
+.DS_
+build/
+*.spec
+dist/
+test.py
+*.pyc
