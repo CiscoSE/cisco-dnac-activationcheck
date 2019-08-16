@@ -49,7 +49,11 @@ opreda@cisco.com, wrog@cisco.com.{tfend}
 END = """
 
 {tf}Script has finished sucessfully!
-Please submit `{extracted_for_validation_json}` file to
+Please submit
+
+    {extracted_for_validation_json}
+    {swim_file}
+file/s to
 
     emearsupport-dnac-activation@cisco.com
 
@@ -86,6 +90,9 @@ def exctract_validation_data(contents):
         'wireless_hosts_count_via_healthcheck',
         'wired_hosts_count_via_healthcheck',
         'fabric_sites_count',
+        'golden_images_count',
+        'upgrade_readiness_report',
+        'upgrade_images_count'
         ]
 
     for param in params:
@@ -106,7 +113,7 @@ def exctract_validation_data(contents):
                     'control': len(fabric[1]['control']),
                     'border': len(fabric[1]['border']),
                 })
-                
+
     return result
 
 if __name__ == "__main__":
@@ -127,6 +134,11 @@ if __name__ == "__main__":
         # connection.fabric_summary()
         connection.show_commands()
 
+        print(Fore.CYAN+'-Starting case: SWIM'+Fore.RESET)
+        connection.count_images()
+        connection.run_upgrade_report()
+        connection.count_image_update_status()
+
         json_data = connection.get_params()
         print(Fore.CYAN+'-Extracting data for validation [counters only]'+Fore.RESET)
         extracted_for_validation_json = exctract_validation_data(json_data)
@@ -139,8 +151,14 @@ if __name__ == "__main__":
         write_json_file(file_name_validated, extracted_for_validation_json)
         print(Fore.CYAN+"---EXTRACTION DONE - Data saved in file {0}".format(file_name_validated)+Fore.RESET)
 
+        if 'upgrade_readiness_report' in extracted_for_validation_json:
+            swim_file = str(extracted_for_validation_json['upgrade_readiness_report']) + '\n'
+        else:
+            swim_file = ""
+
         print(END.format(
             extracted_for_validation_json=file_name_validated,
+            swim_file=swim_file,
             json_data=file_name,
             tf=Fore.MAGENTA,
             tfend=Style.RESET_ALL

@@ -254,7 +254,7 @@ class DNACSession():
             host for host in hosts if host['deviceType'] == 'wireless']
         self.params['wired_hosts_count'] = len(wired_hosts)
         self.params['wireless_hosts_count'] = len(wireless_hosts)
-        
+
         self._count_hosts_via_sitehealt()
 
     def get_network_devices_inventory(self):
@@ -520,3 +520,92 @@ class DNACSession():
                     self.params['wireless_hosts_count_via_healthcheck'] = item['clientUniqueCount']
                 if item['scoreCategory']['value'] == 'WIRED':
                     self.params['wired_hosts_count_via_healthcheck'] = item['clientUniqueCount']
+
+    def get_images(self):
+        """Retreive a list of software images"""
+        print(Fore.GREEN+"---Retrieving software images"+Fore.RESET)
+        r = self._get_url(
+            '/api/v1/image/importation')
+        return r.json().get('response')
+
+    @ask_for_permision('--Do you want to count golden software images?')
+    def count_images(self):
+        """Counting golden software images"""
+        print(Fore.GREEN+"---Counting golden software images"+Fore.RESET)
+        images = self.get_images()
+        golden_images = [image for image in images if image['isTaggedGolden'] == True]
+        self.params['golden_images_count'] = len(golden_images)
+
+    def upgrade_report(self):
+        """Command Runner"""
+        print(Fore.GREEN+"---Running Upgrade Readiness Report"+Fore.RESET)
+        payload = []
+        r = self._post_url(
+            '/api/v1/image/upgrade-analysis/file', payload)
+        return r.json().get('response')
+
+    def download_file(self, file_url):
+        """Downloading File URL"""
+        print(Fore.GREEN+"---Downloading File URL"+Fore.RESET)
+        r = self._get_url(file_url)
+
+        file_name = r.headers['fileName']
+        dir_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        file_path = os.path.join(dir_path, file_name)
+
+        with open(file_path, 'wb') as report_file:
+            report_file.write(r.content)
+        print(Fore.GREEN+"---Downloaded File {0}".format(file_name)+Fore.RESET)
+
+        return file_name
+
+    @ask_for_permision('--Do you want to generate upgrade readiness report?')
+    def run_upgrade_report(self):
+        """Run report"""
+        report = self.upgrade_report()
+        task = self.check_task(report['taskId'])
+
+        retries = 12
+        while retries > 0:
+            try:
+                file_id = task["additionalStatusURL"]
+                break
+            except Exception:
+                print(Fore.YELLOW+"---Task still running. Trying again..."+Fore.RESET)
+                task = self.check_task(report['taskId'])
+                time.sleep(2)
+                retries -= 1
+
+        if retries == 0:
+            print("Error checking task")
+            sys.exit(1)
+
+        retries = 6
+        while retries > 0:
+            try:
+                file = self.download_file(file_id)
+                self.params['upgrade_readiness_report'] = file
+                return file
+            except Exception:
+                print(Fore.YELLOW+"---File not ready. Trying again..."+Fore.RESET)
+                time.sleep(2)
+                retries -= 1
+
+        if retries == 0:
+            print("Exception in Downloading File")
+            sys.exit(1)
+
+    def get_image_update_status(self):
+        """Retreive a list of image update status"""
+        print(Fore.GREEN+"---Retrieving image update status"+Fore.RESET)
+        r = self._get_url(
+            '/api/v1/image/task?taskType=activate')
+        return r.json().get('response')
+
+    @ask_for_permision('--Do you want to count image upgrades?')
+    def count_image_update_status(self):
+        """Counting image upgrades"""
+        print(Fore.GREEN+"---Counting image upgrades"+Fore.RESET)
+        image_upgrades = self.get_image_update_status()
+        upgrades = [image_upgrade for image_upgrade in image_upgrades if image_upgrade['taskStatus'] == "success"]
+        self.params['upgrade_images_count'] = len(upgrades)
