@@ -4,7 +4,7 @@ certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
 colorama==0.4.1
-cryptography==2.7
+cryptography==3.2
 idna==2.8
 pyAesCrypt==0.4.3
 pycodestyle==2.5.0
